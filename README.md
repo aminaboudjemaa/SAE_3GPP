@@ -6,8 +6,10 @@ pip install -r requirements
 ```
 ## Run to create database
 ```bash
-python main.py
+cd web/sae_3gpp_web
+python manage.py qcluster &
+python manage.py runserver
 ```
 
 ## Configuration
-see conf.py for configuration
+see web/sae_3gpp_web/sae_3gpp_web/settings.py for configuration
