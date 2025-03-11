@@ -1,13 +1,12 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, Integer, String
 import pandas as pd
 
 from conf import DB_NAME
 
 # Create an SQLite engine
-engine = create_engine(f'sqlite:///{DB_NAME}', echo=True)
+engine = create_engine(f'sqlite:///{DB_NAME}', echo=False)
 
 # Define the base class
 Base = declarative_base()
@@ -48,6 +47,15 @@ class Document(Base):
     cc = Column(String)
     original_ls = Column(String)
     reply_in = Column(String)
+
+    # AI generated fields
+    topic = Column(String)
+    problem = Column(String)
+    solution = Column(String)
+
+    @property
+    def zip_link(self):
+        return '/'.join(self.url.split('/')[:-1]+[self.tdoc_id+".zip"])
 
     def __repr__(self):
         return f"<Document(tdoc={self.tdoc_id})>"

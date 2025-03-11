@@ -29,7 +29,7 @@ def get_tdoc_link(links:list[str])->Optional[str]:
     )
 
 def get_file_name(url:str)->str:
-    return url.split("/")[-1]
+    return url.split("/")[-1] # to have acces to last element -1 
 
 # Global var
 tdocs:list[str] = []
@@ -63,14 +63,14 @@ if __name__ == "__main__":
             file.write(f"{l} \n")
 
     with open(TDOC_LINKS_FILE_NAME) as f:
-        tdocs = [line.strip() for line in f.readlines()]
+        tdocs = [line.strip() for line in f.readlines()] # strip to delet \n 
 
 
     for url in tdocs:
         try:
             pd_tdoc: pd.DataFrame=pd.read_excel(url)
             session = Session()
-            for index, tdoc in pd_tdoc.iterrows():
+            for index, tdoc in pd_tdoc.iterrows(): # to iterate in lines not colomnes 
                 doc = Document(tdoc, url)
                 session.add(doc)
                 session.commit()

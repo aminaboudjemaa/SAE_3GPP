@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+
+
+</head>
+<body>
+    
+    <div class="container mt-5">
+        <h2>Dashboard</h2>
+        <a class="primary" href="/tdoc/list">List of documents</a>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="row">
+                    <div class="card bg-primary text-white p-3">
+                        <h4>Number of meetings documents</h4>
+                        <p>{{ nb_total }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="card bg-success text-white p-3">
+                        <h4>Number of treated documents</h4>
+                        <p>{{ nb_treated }}</p>
+                        <button class="warning" {% if has_tasks %}disabled{% endif %}>Start treatment</button>
+                        <button class="warning" {% if not has_tasks %}disabled{% endif %}>Stop treatment</button>
+                        {% if has_tasks %}Task in progress{% endif %}
+                    </div>
+                </div>
+            </div>
+            <br>
+            <div class="col-md-2"></div>
+
+            <div class="col-md-6">
+                <div id="pie-chart" style="width: 600px; height: 400px;"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div id="meetingChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get data from Django context
+        var labels = {{ labels|safe }};
+        var data = {{ data|safe }};
+        function getRandomColor() {
+        return 'rgb(' + 
+            Math.floor(Math.random() * 256) + ',' + 
+            Math.floor(Math.random() * 256) + ',' + 
+            Math.floor(Math.random() * 256) + ')';
+    }
+
+    // Create an array of random colors for each bar
+    var colors = labels.map(() => getRandomColor());
+
+        // Plotly bar chart setup
+        var trace = {
+            x: labels,  // X-axis is the meeting names
+            y: data,  // Y-axis is the number of documents
+            type: 'bar',  // Bar chart type
+            marker: {
+                color: colors // Blue color
+            }
+        };
+
+        var layout = {
+            title: 'Number of Documents per Meeting',
+            xaxis: {
+                title: 'Meetings'
+            },
+            yaxis: {
+                title: 'Number of Documents',
+                rangemode: 'tozero'  // Start Y-axis at zero
+            }
+        };
+
+        // Plot the chart
+        Plotly.newPlot('meetingChart', [trace], layout);
+    </script>
+    <script>
+        var data = [{
+            values: [{{nb_treated}}, {{nb_untreated}}],  // Treated and Untreated Docs
+            labels: ['Treated Docs', 'Untreated Docs'],
+            type: 'pie',
+            hole: 0.4,  // Makes it a donut chart
+        }];
+
+        var layout = {
+            title: 'Documents Status',
+            showlegend: true,
+        };
+
+        Plotly.newPlot('pie-chart', data, layout);
+    </script>
+</body>
+</html>

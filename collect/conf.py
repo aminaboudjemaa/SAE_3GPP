@@ -6,4 +6,4 @@ USE_MULTITHREADING = True
 FETCH_TDOC_LINKS = True
 TDOC_LINKS_FILE_NAME = "fichier_tdoc.txt"
 
-DB_NAME = "tdocs.db"
+DB_NAME = "../tdocs.db"

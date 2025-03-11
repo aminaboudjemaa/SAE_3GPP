@@ -9,3 +9,14 @@ temp/
 
 # ignore data base 
 *.db
+*.sqlite3
+
+# ignore pyc files
+*.pyc
+build/*
+__pycache__
+
+# ignore doc files
+*.doc
+*.docx
+zips

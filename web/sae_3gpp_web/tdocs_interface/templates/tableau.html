@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des réunions</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <div class="container mt-4">
+        <a class="primary" href="/tdoc">Dashboard</a>
+        <h2 class="text-center">Liste des réunions</h2>
+        <table id="tdocsTable" class="display table table-bordered table-striped">
+            <thead  class="table-dark">
+                <tr>
+                    <th>Meeting</th>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Source</th>
+                    <th>Content</th>
+                    <th>Topic</th>
+                    <th>Summary</th>
+                    <th>Problem</th>
+                    <th>Solution</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in docs %}
+                <tr>
+                    <!-- Add quotes around the URL variable for href -->
+                    <td>{{ doc.meeting}}</td>
+                    <td><a href="{{ doc.zip_link }}"> {{ doc.tdoc_id }}</a></td>
+                    <td>{{ doc.title }}</td>
+                    <td>{{ doc.type }}</td>
+                    <td>{{ doc.source }}</td>
+                    <td>{{ doc.content }}</td>
+                    <td>{{ doc.topic }}</td>
+                    <td>{{ doc.summary }}</td>
+                    <td>{{ doc.problem }}</td>
+                    <td>{{ doc.solution }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <script>
+            $(document).ready(function () {
+                $('#tdocsTable').DataTable();
+            });
+        </script>
+    </div>
+</body>
+</html>
