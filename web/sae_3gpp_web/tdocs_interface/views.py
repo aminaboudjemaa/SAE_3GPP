@@ -63,5 +63,6 @@ def collect_docs(request):
 
 
 def debug(request):
+    return render(request, "d.html")
     return JsonResponse(list(x.q_options() for x in OrmQ.objects.all()), safe=False)
     

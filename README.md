@@ -7,8 +7,11 @@ pip install -r requirements
 ## Run to create database
 ```bash
 cd web/sae_3gpp_web
+python manage.py makemigrations
+python manage.py migrate
 python manage.py qcluster &
 python manage.py runserver
+
 ```
 
 ## Configuration
