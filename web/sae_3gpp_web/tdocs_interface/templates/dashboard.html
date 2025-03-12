@@ -2,7 +2,44 @@
 
 {% block content %}
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        /* Center the loader */
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+            flex-direction: column;
+        }
 
+        /* Loading Bar */
+        .loading-bar {
+            width: 50%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated Effect */
+        .loading-bar::before {
+            content: "";
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #00c6ff);
+            position: absolute;
+            animation: loading-animation 2s infinite;
+        }
+
+        /* Animation */
+        @keyframes loading-animation {
+            0% { width: 0%; }
+            25% { width: 50%; }
+            50% { width: 85%; }
+        }
+    </style>
         
     <div class="container mt-5">
         <h2>Dashboard</h2>
@@ -18,9 +55,9 @@
                     <div class="card bg-success text-white p-3">
                         <h4>Number of treated documents</h4>
                         <p>{{ nb_treated }}</p>
-                        <button class="warning" {% if has_tasks %}disabled{% endif %}>Start treatment</button>
-                        <button class="warning" {% if not has_tasks %}disabled{% endif %}>Stop treatment</button>
-                        {% if has_tasks %}Task in progress{% endif %}
+                        <button class="warning" {% if has_tasks %}disabled{% endif %} onclick="get('/tdoc/start')">Start treatment</button>
+                        <button class="warning" {% if not has_tasks %}disabled{% endif %} onclick="get('/tdoc/stop')">Stop treatment</button>
+                        {% if has_tasks %}Task in progress ...  <div class="loading-bar"></div>{% endif %}
                     </div>
                 </div>
             </div>
@@ -33,10 +70,24 @@
         </div>
         <div class="row">
             <div class="col-md-12">
-                <div id="meetingChart"></div>
+                <div id="meetingChart" style="height: 600px;"></div>
             </div>
         </div>
     </div>
+
+    <script>
+        function get(url) {
+            fetch(url, { method: 'GET' })
+                .then(response => response.text())
+                .then(data => alert(data))
+                .catch(error => console.error("Error:", error));
+                setTimeout(() => {
+                    location.reload();
+                }, 5000);
+           
+            
+        }
+    </script>
 
     <script>
         // Get data from Django context
@@ -64,9 +115,6 @@
 
         var layout = {
             title: 'Number of Documents per Meeting',
-            xaxis: {
-                title: 'Meetings'
-            },
             yaxis: {
                 title: 'Number of Documents',
                 rangemode: 'tozero'  // Start Y-axis at zero

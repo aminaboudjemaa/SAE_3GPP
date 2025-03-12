@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.db.models import Count
@@ -19,12 +21,23 @@ EXCLUDED_MEETINGS = [
 
 def tdoc_list(request):
     tdocs = Documents.objects.filter(topic__isnull=False).all()
-    # for i, tdoc in enumerate(tdocs):
-    #     tdoc.meeting = tdoc.meeting_
-    #     tdoc.save()
-    #     if i%1000:
-    #         print(f'\r{100*i/len(tdocs)}%% {tdoc.meeting_}', flush=False)
-    return render(request, 'tableau.html', {'docs': tdocs})
+    tdocs_dicts = [
+        {        
+            'meeting': doc.meeting,
+            'zip_link': doc.zip_link,
+            'tdoc_id': doc.tdoc_id,
+            'title': doc.title,
+            'type': doc.type,
+            'source': doc.source,
+            'content': doc.content,
+            'topic': doc.topic,
+            'summary': doc.summary,
+            'problem': doc.problem,
+            'solution': doc.solution,
+        }
+        for doc in tdocs
+    ] 
+    return render(request, 'tableau.html', {'docs':tdocs_dicts})
 
 def dashboard(request):
     tdocs_treated = Documents.objects.filter(topic__isnull=False).count()
@@ -56,7 +69,39 @@ def start_doc_treatment(request):
     else:
         return JsonResponse({"message":"Task already started"})
 
-    
+def stop_doc_treatment(request):
+    OrmQ.objects.all().delete()
+    return JsonResponse({"message":"Task stopped"})
+
+def edit_tdoc(request):
+    if request.method == "POST":
+        try:
+            print(request.body)
+            data = json.loads(request.body)  # Parse JSON request body
+            tdoc_id = data.get("tdoc_id")
+            doc = Documents.objects.get(tdoc_id=tdoc_id)
+            topic = data.get("topic", doc.topic)
+            content = data.get("content", doc.content)
+            summary = data.get("summary", doc.summary)
+            problem = data.get("problem", doc.problem)
+            solution = data.get("solution", doc.solution)
+            doc.topic = topic
+            doc.content = content
+            doc.summary = summary
+            doc.problem = problem
+            doc.solution = solution
+            doc.save()
+
+            return JsonResponse({"message": "document updated", "tdoc_id": doc.tdoc_id}, status=200)
+
+        except Documents.DoesNotExist:
+            return JsonResponse({"error": "document not found"}, status=404)
+        except Exception as e:
+            print(e)
+            return JsonResponse({"error": str(e)}, status=400)
+
+def about(request):
+    return render(request, "about.html")
 
 def collect_docs(request):
     collect()

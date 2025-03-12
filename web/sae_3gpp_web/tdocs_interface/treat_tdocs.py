@@ -12,9 +12,8 @@ def is_docfile(file:str):
     return file.endswith(".docx") or file.endswith(".doc")
 
 def treat_docs():
-    print("started")
+    print("started treatment")
     tdocs = Documents.objects.filter(
-        url="https://www.3gpp.org/ftp/tsg_sa/WG2_Arch/TSGS2_116_Vienna/Docs/TDoc_List_Meeting_SA2%23116.xlsm",
         content__isnull=True,
     ).all()
     len_tdocs = len(tdocs)
@@ -49,7 +48,10 @@ def treat_docs():
                     os.remove(EXTRACT_TO+f)
                 except Exception as e:
                     print(e) 
-                    raise e          
+                    raise e 
+        else:
+            tdoc.content="Not relevant"
+            tdoc.save()         
         print(f"\rProgress {100*i/len_tdocs:.2f}%", end="", flush=True)
 
 

@@ -1,51 +1,156 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+
+<!-- Handsontable CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css">
+
+<!-- Handsontable JS -->
+<script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
+
+<!-- jQuery (Optional, but useful for AJAX) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+
+<!-- sheet js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
 <div class="row">
     <h2 class="text-center">Liste des documents de réunions</h2>
-    <div class="table-responsive">
-        <table id="tdocsTable" class="display table table-bordered table-striped">
-            <thead  class="table-dark">
-                <tr>
-                    <th>Meeting</th>
-                    <th>ID</th>
-                    <th>Title</th>
-                    <th>Type</th>
-                    <th>Source</th>
-                    <th>Content</th>
-                    <th>Topic</th>
-                    <th>Summary</th>
-                    <th>Problem</th>
-                    <th>Solution</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for doc in docs %}
-                <tr>
-                    <!-- Add quotes around the URL variable for href -->
-                    <td>{{ doc.meeting}}</td>
-                    <td><a href="{{ doc.zip_link }}"> {{ doc.tdoc_id }}</a></td>
-                    <td>{{ doc.title }}</td>
-                    <td>{{ doc.type }}</td>
-                    <td>{{ doc.source }}</td>
-                    <td>{{ doc.content }}</td>
-                    <td>{{ doc.topic }}</td>
-                    <td>{{ doc.summary }}</td>
-                    <td>{{ doc.problem }}</td>
-                    <td>{{ doc.solution }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div>
+        <button id="exportExcelBtn" >Export as Excel</button>
     </div>
-    
-    <script>
-        $(document).ready(function () {
-            $('#tdocsTable').DataTable();
-        });
-    </script>
+    <div class="table-responsive">
+        <div id="excelTable">
 </div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var container = document.getElementById('excelTable');
+        
+        // Get data from Django (convert template variable to JSON)
+        var fullData = {{ docs|safe }};
+        // Create Handsontable instance
+        var hot = new Handsontable(container, {
+            data: fullData,
+            colHeaders: [
+                'Meeting',
+                'ID',
+                'Title',
+                'Type',
+                'Source',
+                'Content',
+                'Topic',
+                'Summary',
+                'Problem',
+                'Solution',
+            ],
+            columns: [
+                { data: 'meeting', type: 'text', readOnly: true},
+                { data: 'tdoc_id', type: 'text', readOnly: true,
+                    // Show as link
+                    renderer: function (instance, td, row, col, prop, value, cellProperties) {
+                                const rowData = instance.getSourceDataAtRow(row);  // Access row data
+                                const tdoc_id = rowData.tdoc_id;  // Get tdoc_id for the current row
+                                const zip_link = rowData.zip_link;  // Get zip_link for the current row
+
+                                // If zip_link exists, create a clickable link with tdoc_id
+                                if (zip_link) {
+                                    td.innerHTML = `<a href="${zip_link}" target="_blank" class="htLink">${tdoc_id}</a>`;
+                                } else {
+                                    td.innerHTML = tdoc_id;  // If no link, display tdoc_id as text
+                                }
+                    }
+                },
+                { data: 'title', type: 'text', readOnly: true},
+                { data: 'type', type: 'text', readOnly: true},
+                { data: 'source', type: 'text', readOnly: true},
+                { data: 'content', type: 'text'},
+                { data: 'topic', type: 'text'},
+                { data: 'summary', type: 'text'},
+                { data: 'problem', type: 'text'},
+                { data: 'solution', type: 'text'}
+            ],
+            rowHeaders: true,
+            colWidths: [150, 150, 150, 150, 150,150,150,150,150,150],
+            width: '100%',
+            height: 'auto',
+            licenseKey: 'non-commercial-and-evaluation',  // Free version key
+            dropdownMenu: true, // Enable filtering
+            filters: true, // Enable column filtering
+            contextMenu: true, // Right-click menu
+            manualColumnResize: true,
+            manualRowResize: true,
+            afterChange: function (changes, source) {
+                if (source === 'edit') {
+                    changes.forEach(([row, col, oldValue, newValue]) => {
+                        if (oldValue !== newValue) {
+                            var rowData = hot.getSourceDataAtRow(row);
+                            updateDatabase(rowData);
+                        }
+                    });
+                }
+            },
+            
+        });
+        // Function to send updated data to Django
+        function updateDatabase(rowData) {
+            $.ajax({
+                url: "/tdoc/edit",
+                type: "POST",
+                headers: {
+                    'X-CSRFToken':"{{ csrf_token }}"  // Ensure CSRF token is included
+                },
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    tdoc_id: rowData.tdoc_id,
+                    content: rowData.content,
+                    topic: rowData.topic,
+                    summary: rowData.summary,
+                    problem: rowData.problem,
+                    solution: rowData.solution
+                }),
+                success: function (response) {
+                    console.log("Update of "+ rowData.tdoc_id +" successful");
+                },
+                error: function (xhr, status, error) {
+                    alert("An error occurred: " + error);
+                }
+            });
+        }
+
+        // Export to CSV
+        function exportCSV() {
+            var csvData = hot.getData();
+            var csvString = '';
+            
+            // Loop through each row
+            csvData.forEach(function(row) {
+                // Join each column with a comma and add a new line after each row
+                csvString += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+            
+            // Create a Blob with the CSV content
+            var blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'meeting_documents.csv'; // Default download file name
+            link.click();
+        }
+
+        // Function to export as Excel
+        function exportExcel() {
+            var data = hot.getData();
+            var ws = XLSX.utils.aoa_to_sheet(data);  // Convert the 2D array to a worksheet
+            var wb = XLSX.utils.book_new();          // Create a new workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');  // Append the sheet to the workbook
+
+            // Generate Excel file and trigger download
+            XLSX.writeFile(wb, 'meeting_documents.xlsx');
+        }
+
+        // Add event listeners to buttons
+        document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
+});
+</script>
 {% endblock %}
