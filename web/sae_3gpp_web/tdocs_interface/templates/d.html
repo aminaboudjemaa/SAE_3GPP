@@ -5,6 +5,143 @@
     <p>Here is the content for the dashboard page.</p>
 {% endblock %}
 
+    <div id="excelTable"></div>
+    <div>
+        <button id="exportCSVBtn" disabled>Export as CSV</button>
+        <button id="exportExcelBtn" >Export as Excel</button>
+    </div>
+
+<!-- Handsontable CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.css">
+
+<!-- Handsontable JS -->
+<script src="https://cdn.jsdelivr.net/npm/handsontable@12.3.1/dist/handsontable.full.min.js"></script>
+
+<!-- jQuery (Optional, but useful for AJAX) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- sheet js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var container = document.getElementById('excelTable');
+        
+        // Get data from Django (convert template variable to JSON)
+        var tableData = [
+        {"name": "Alice", "age": 25, "country": "USA"},
+        {"name": "Bob", "age": 30, "country": "Canada"},
+        {"name": "Charlie", "age": 28, "country": "UK"}
+    ];
+        
+        // Create Handsontable instance
+        var hot = new Handsontable(container, {
+            data: tableData,
+            colHeaders: ['Name', 'Age', 'Country'],
+            columns: [
+                { data: 'name', type: 'text' },
+                { data: 'age', type: 'numeric' },
+                { data: 'country', type: 'text' }
+            ],
+            rowHeaders: true,
+            colWidths: [150, 80, 150],
+            width: '100%',
+            height: 'auto',
+            licenseKey: 'non-commercial-and-evaluation',  // Free version key
+            dropdownMenu: true, // Enable filtering
+            filters: true, // Enable column filtering
+            contextMenu: true, // Right-click menu
+            manualColumnResize: true,
+            manualRowResize: true,
+            afterChange: function (changes, source) {
+                if (source === 'edit') {
+                    changes.forEach(([row, col, oldValue, newValue]) => {
+                        if (oldValue !== newValue) {
+                            var rowData = hot.getSourceDataAtRow(row);
+                            updateDatabase(rowData);
+                        }
+                    });
+                }
+            },
+            buttons: [
+                {
+                    name: 'exportCSV',
+                    label: 'Export CSV',
+                    callback: function() {
+                        exportCSV(hot);
+                    }
+                },
+                {
+                    name: 'exportExcel',
+                    label: 'Export Excel',
+                    callback: function() {
+                        exportExcel(hot);
+                    }
+                }
+            ]
+        });
+    
+        // Function to send updated data to Django
+        function updateDatabase(rowData) {
+            $.ajax({
+                url: "/edit-user/",
+                type: "POST",
+                data: {
+                    name: rowData.name,
+                    age: rowData.age,
+                    country: rowData.country,
+                    csrfmiddlewaretoken: "{{ csrf_token }}"
+                },
+                success: function (response) {
+                    console.log("Update successful");
+                },
+                error: function (xhr) {
+                    console.log("Update failed");
+                }
+            });
+        }
+
+        // Export to CSV
+        function exportCSV() {
+            var csvData = hot.getData();
+            var csvString = '';
+            
+            // Loop through each row
+            csvData.forEach(function(row) {
+                // Join each column with a comma and add a new line after each row
+                csvString += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+            
+            // Create a Blob with the CSV content
+            var blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'table_data.csv'; // Default download file name
+            link.click();
+        }
+
+    // Function to export as Excel
+    function exportExcel() {
+        var data = hot.getData();
+        var ws = XLSX.utils.aoa_to_sheet(data);  // Convert the 2D array to a worksheet
+        var wb = XLSX.utils.book_new();          // Create a new workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');  // Append the sheet to the workbook
+
+        // Generate Excel file and trigger download
+        XLSX.writeFile(wb, 'table_data.xlsx');
+    }
+
+    // Add event listeners to buttons
+    document.getElementById('exportCSVBtn').addEventListener('click', exportCSV);
+    document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
+});
+
+
+
+
 
 
 

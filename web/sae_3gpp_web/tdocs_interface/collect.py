@@ -40,19 +40,22 @@ def get_all_tdocs(link:str):
     if not is_file(link):
         print(f"Looking inside {link}")
         # Recover links of current page
-        if links:=get_sub_links(link):
-            # Recover tdoc link
-            if tdoc_link:= get_tdoc_link(links):
-                # TDoc found => append it
-                tdocs.append(tdoc_link)
-                print(f"Found TDoc{tdoc_link}")
-            # look inside all other links
-            if USE_MULTITHREADING:
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = list(executor.map(get_all_tdocs, links))
-            else:
-                for l in links:
-                    get_all_tdocs(l)
+        try:
+            if links:=get_sub_links(link):
+                # Recover tdoc link
+                if tdoc_link:= get_tdoc_link(links):
+                    # TDoc found => append it
+                    tdocs.append(tdoc_link)
+                    print(f"Found TDoc{tdoc_link}")
+                # look inside all other links
+                if USE_MULTITHREADING:
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        results = list(executor.map(get_all_tdocs, links))
+                else:
+                    for l in links:
+                        get_all_tdocs(l)
+        except Exception:
+            pass
 
 
 def collect():
