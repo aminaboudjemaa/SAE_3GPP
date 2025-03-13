@@ -17,11 +17,13 @@ Including another URLconf
 from django.contrib import admin
 
 from django.urls import path, include
+from tdocs_interface.views import login
 from django.shortcuts import redirect
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('tdoc/', include('tdocs_interface.urls')),
+    path('login/', login, name='login'),
     path('', lambda x: redirect("dashboard")),
 ]

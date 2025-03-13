@@ -106,6 +106,8 @@ def about(request):
 def collect_docs(request):
     collect()
 
+def login(request):
+    return render(request, "login.html")
 
 def debug(request):
     return render(request, "d.html")

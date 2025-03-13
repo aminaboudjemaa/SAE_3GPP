@@ -102,3 +102,7 @@ class Documents(models.Model):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+
+class Setting(models.Model):
+    schedule_treatment =  models.IntegerField(blank=True, null=True)
