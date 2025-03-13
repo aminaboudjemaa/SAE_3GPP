@@ -2,6 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import Column, Integer, String
 import pandas as pd
+import re
 
 from conf import DB_NAME
 
@@ -49,9 +50,13 @@ class Document(Base):
     reply_in = Column(String)
 
     # AI generated fields
+    url = Column(String)
+    content = Column(String)
+    summary = Column(String)
     topic = Column(String)
     problem = Column(String)
     solution = Column(String)
+    meeting = Column(String)
 
     @property
     def zip_link(self):
@@ -59,6 +64,15 @@ class Document(Base):
 
     def __repr__(self):
         return f"<Document(tdoc={self.tdoc_id})>"
+    
+    @property
+    def meeting_(self):
+        full_name = self.url.split("/")[-3]
+        splitted = full_name.split('_')
+        if len(splitted)>=3:
+            return re.sub(r"[\d-]", "", " ".join(splitted[2:]))
+        
+        return full_name
     
     def __init__(self, df:pd.DataFrame, url:str):
         self.url=url
@@ -93,6 +107,7 @@ class Document(Base):
         self.cc = str(df['Cc'])
         self.original_ls = str(df['Original LS'])
         self.reply_in = str(df['Reply in'])
+        self.meeting = self.meeting_
 
 # Create the table in the database (if it doesn't already exist)
 Base.metadata.create_all(engine)

@@ -16,7 +16,7 @@ def get_sub_links(link:str)->list[str]:
     if is_file(link):
         return []
     # Get html content
-    content:str = requests.get(link, timeout=3).text
+    content:str = requests.get(link, timeout=300).text
     # Get all links present in html page
     links:list[str] = re.findall(LINK_REGX, content)
     # Get only children links
@@ -56,6 +56,7 @@ def get_all_tdocs(link:str):
 
 
 if __name__ == "__main__":
+    
 
     get_all_tdocs(FTP_SERVER)
     with open(TDOC_LINKS_FILE_NAME,"w") as file:
